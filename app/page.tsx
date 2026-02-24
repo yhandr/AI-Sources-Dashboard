@@ -1,65 +1,254 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { SourceDialog } from "@/components/sources/source-dialog";
+import { DeleteDialog } from "@/components/sources/delete-dialog";
+import { SourcesTable } from "@/components/sources/sources-table";
+import { AISource, AISourceFormData, CATEGORIES } from "@/lib/types";
+import { Plus, Search, Star, Database } from "lucide-react";
 
 export default function Home() {
+  const [sources, setSources] = useState<AISource[]>([]);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [editSource, setEditSource] = useState<AISource | undefined>();
+  const [deleteSource, setDeleteSource] = useState<AISource | undefined>();
+
+  const fetchSources = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (category && category !== "all") params.set("category", category);
+
+      const res = await fetch(`/api/sources?${params}`);
+      const data = await res.json();
+      setSources(data);
+    } catch {
+      toast.error("Errore nel caricamento delle fonti");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [search, category]);
+
+  useEffect(() => {
+    fetchSources();
+  }, [fetchSources]);
+
+  const handleAdd = async (data: AISourceFormData) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Fonte aggiunta con successo");
+      setAddOpen(false);
+      fetchSources();
+    } catch {
+      toast.error("Errore durante l'aggiunta della fonte");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async (data: AISourceFormData) => {
+    if (!editSource) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/sources/${editSource.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Fonte aggiornata con successo");
+      setEditSource(undefined);
+      fetchSources();
+    } catch {
+      toast.error("Errore durante la modifica della fonte");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteSource) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/sources/${deleteSource.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Fonte eliminata");
+      setDeleteSource(undefined);
+      fetchSources();
+    } catch {
+      toast.error("Errore durante l'eliminazione");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleFavorite = async (source: AISource) => {
+    try {
+      await fetch(`/api/sources/${source.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !source.isFavorite }),
+      });
+      fetchSources();
+    } catch {
+      toast.error("Errore nell'aggiornamento dei preferiti");
+    }
+  };
+
+  const filteredSources = favoritesOnly
+    ? sources.filter((s) => s.isFavorite)
+    : sources;
+
+  const favoriteCount = sources.filter((s) => s.isFavorite).length;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-background">
+      <Toaster position="top-right" />
+
+      {/* Header */}
+      <header className="border-b bg-card">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary rounded-lg p-2">
+              <Database className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">AI Sources Dashboard</h1>
+              <p className="text-xs text-muted-foreground">
+                Gestisci le tue fonti e risorse AI
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Aggiungi fonte
+          </Button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-card rounded-lg border p-4">
+            <p className="text-sm text-muted-foreground">Totale fonti</p>
+            <p className="text-2xl font-bold mt-1">{sources.length}</p>
+          </div>
+          <div className="bg-card rounded-lg border p-4">
+            <p className="text-sm text-muted-foreground">Preferiti</p>
+            <p className="text-2xl font-bold mt-1">{favoriteCount}</p>
+          </div>
+          <div className="bg-card rounded-lg border p-4">
+            <p className="text-sm text-muted-foreground">Categorie</p>
+            <p className="text-2xl font-bold mt-1">
+              {new Set(sources.map((s) => s.category)).size}
+            </p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cerca per nome, tag, descrizione..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tutte le categorie</SelectItem>
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant={favoritesOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFavoritesOnly(!favoritesOnly)}
+            className="gap-2"
           >
-            Documentation
-          </a>
+            <Star className="h-4 w-4" fill={favoritesOnly ? "currentColor" : "none"} />
+            Preferiti
+            {favoriteCount > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {favoriteCount}
+              </Badge>
+            )}
+          </Button>
         </div>
+
+        {/* Table */}
+        {isLoading ? (
+          <div className="text-center py-16 text-muted-foreground">
+            Caricamento...
+          </div>
+        ) : (
+          <SourcesTable
+            sources={filteredSources}
+            onEdit={setEditSource}
+            onDelete={setDeleteSource}
+            onToggleFavorite={handleToggleFavorite}
+          />
+        )}
       </main>
+
+      {/* Dialogs */}
+      <SourceDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSubmit={handleAdd}
+        isLoading={isSubmitting}
+      />
+      <SourceDialog
+        open={!!editSource}
+        onOpenChange={(open) => !open && setEditSource(undefined)}
+        source={editSource}
+        onSubmit={handleEdit}
+        isLoading={isSubmitting}
+      />
+      <DeleteDialog
+        open={!!deleteSource}
+        onOpenChange={(open) => !open && setDeleteSource(undefined)}
+        source={deleteSource}
+        onConfirm={handleDelete}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sources — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c10;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a38;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --accent: #e8ff47;
+    --yt: #ff4545;
+    --x: #e8e8f0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    padding: 52px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .brand-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .5; transform: scale(1.3); }
+  }
+
+  .brand-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 300;
+    margin-top: 8px;
+  }
+
+  .stats {
+    display: flex;
+    gap: 28px;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    text-align: right;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: right;
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-right: 2px;
+  }
+
+  .pill {
+    padding: 7px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .18s ease;
+  }
+
+  .pill:hover { border-color: var(--accent); color: var(--text); }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: #0c0c10; font-weight: 600; }
+
+  .search-wrap {
+    margin-left: auto;
+    position: relative;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  #search {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px 8px 36px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    width: 200px;
+    outline: none;
+    transition: border-color .18s;
+  }
+
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--muted); }
+
+  .section-group { margin-bottom: 48px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .section-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 2px 10px;
+    color: var(--muted);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: all .2s ease;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp .4s ease both;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .card.yt::before { background: var(--yt); }
+  .card.x::before  { background: var(--x); }
+
+  .card:hover { border-color: rgba(232,255,71,.25); transform: translateY(-2px); background: #1f1f2c; }
+  .card:hover::before { opacity: 1; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .card-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .card-handle {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .card-arrow {
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform .18s, color .18s;
+    margin-top: 2px;
+  }
+
+  .card:hover .card-arrow { transform: translate(2px,-2px); color: var(--accent); }
+
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 9px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .tag.it { border-color: #3a5f3a; color: #6eba6e; background: rgba(110,186,110,.07); }
+  .tag.note { color: #9b9bb0; }
+
+  .platform-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .badge-yt { background: rgba(255,69,69,.12); color: var(--yt); }
+  .badge-x  { background: rgba(232,232,240,.08); color: var(--x); }
+
+  .empty { text-align:center; padding:80px 20px; color:var(--muted); font-size:15px; display:none; }
+  .empty.show { display:block; }
+  .hidden { display: none !important; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-inner">
+      <div>
+        <div class="brand">
+          <div class="brand-dot"></div>
+          <span class="brand-label">AI Sources Tracker</span>
+        </div>
+        <h1>Le nostre fonti<br><span>AI & Digital</span></h1>
+        <p class="subtitle">Tutto quello che il team segue per restare aggiornato</p>
+      </div>
+      <div class="stats">
+        <div>
+          <div class="stat-num" id="stat-total">21</div>
+          <div class="stat-label">Fonti totali</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters">
+    <span class="filter-label">Mostra:</span>
+    <button class="pill active" data-filter="all">Tutte</button>
+    <button class="pill" data-filter="YouTube">YouTube</button>
+    <button class="pill" data-filter="X">X / Twitter</button>
+    <button class="pill" data-filter="it">🇮🇹 In italiano</button>
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="search" type="text" placeholder="Cerca...">
+    </div>
+  </div>
+
+  <div class="section-group" id="section-yt">
+    <div class="section-header">
+      <span style="font-size:15px; color:var(--yt)">▶</span>
+      <span class="section-title">YouTube</span>
+      <span class="section-count" id="count-yt">16</span>
+    </div>
+    <div class="grid" id="grid-yt"></div>
+  </div>
+
+  <div class="section-group" id="section-x">
+    <div class="section-header">
+      <span style="font-size:13px; font-family:serif; font-weight:900; color:var(--muted)">𝕏</span>
+      <span class="section-title">X / Twitter</span>
+      <span class="section-count" id="count-x">5</span>
+    </div>
+    <div class="grid" id="grid-x"></div>
+  </div>
+
+  <div class="empty" id="empty">Nessuna fonte trovata.</div>
+
+  <footer>AI SOURCES — AGGIORNATO 2025</footer>
+</div>
+
+<script>
+const sources = {
+  YouTube: [
+    { name:"The AI Search",     handle:"@theAIsearch",       url:"https://www.youtube.com/@theAIsearch",        cat:"AI News & Tools",   it:false },
+    { name:"Andrej Karpathy",   handle:"@AndrejKarpathy",    url:"https://www.youtube.com/@AndrejKarpathy",     cat:"AI / Deep Tech",    it:false, note:"Ex OpenAI" },
+    { name:"Cal Newport",       handle:"@CalNewportMedia",   url:"https://www.youtube.com/@CalNewportMedia",    cat:"Produttività",      it:false, note:"Deep Work" },
+    { name:"Christine Jiang",   handle:"@christinejiangdata",url:"https://www.youtube.com/@christinejiangdata", cat:"AI & Data",          it:false },
+    { name:"Dara Denney",       handle:"@DaraDenney",        url:"https://www.youtube.com/@DaraDenney",         cat:"Performance Mktg",  it:false },
+    { name:"David Ondrej",      handle:"@DavidOndrej",       url:"https://www.youtube.com/@DavidOndrej",        cat:"AI Tools",          it:false },
+    { name:"Grace Leung",       handle:"@graceleungyl",      url:"https://www.youtube.com/@graceleungyl",       cat:"AI Tools",          it:false },
+    { name:"Harper Carroll AI", handle:"@HarperCarrollAI",   url:"https://www.youtube.com/@HarperCarrollAI",    cat:"AI News & Tools",   it:false },
+    { name:"Helena Liu",        handle:"@HELENA-LIU",        url:"https://www.youtube.com/@HELENA-LIU",         cat:"AI Tools",          it:false },
+    { name:"IA per tutti",      handle:"@IApertutti",        url:"https://www.youtube.com/@IApertutti",         cat:"AI News & Tools",   it:true  },
+    { name:"Jeff Su",           handle:"@JeffSu",            url:"https://www.youtube.com/@JeffSu",             cat:"Produttività",      it:false },
+    { name:"Layla Pomper",      handle:"@LaylaPomper",       url:"https://www.youtube.com/@LaylaPomper",        cat:"Produttività",      it:false },
+    { name:"Luca Mastella",     handle:"@LucaMastella",      url:"https://www.youtube.com/@LucaMastella",       cat:"AI Tools",          it:true  },
+    { name:"Nick Saraev",       handle:"@nicksaraev",        url:"https://www.youtube.com/@nicksaraev",         cat:"Automazioni",       it:false, note:"n8n, Make" },
+    { name:"antirez",           handle:"@antirez",           url:"https://www.youtube.com/@antirez",            cat:"AI / Dev",          it:false },
+    { name:"Tina Huang",        handle:"@TinaHuang1",        url:"https://www.youtube.com/@TinaHuang1",         cat:"AI & Data",         it:false },
+  ],
+  X: [
+    { name:"God of Prompt",  handle:"@godofprompt",  url:"https://x.com/godofprompt",  cat:"Prompt Eng.",  it:false },
+    { name:"Min Choi",       handle:"@minchoi",      url:"https://x.com/minchoi",      cat:"AI News",      it:false },
+    { name:"Rowan Cheung",   handle:"@rowancheung",  url:"https://x.com/rowancheung",  cat:"AI News",      it:false, note:"The Rundown" },
+    { name:"The Rundown AI", handle:"@therundownai", url:"https://x.com/therundownai", cat:"AI News",      it:false },
+    { name:"ept",            handle:"@eptwts",       url:"https://x.com/eptwts",       cat:"AI Tools",     it:false },
+  ]
+};
+
+function makeCard(s, platform) {
+  const cls = platform === 'YouTube' ? 'yt' : 'x';
+  const badgeCls = platform === 'YouTube' ? 'badge-yt' : 'badge-x';
+  const icon = platform === 'YouTube' ? '▶' : '𝕏';
+  return `
+    <a class="card ${cls}" href="${s.url}" target="_blank" rel="noopener"
+       data-name="${s.name.toLowerCase()}" data-cat="${s.cat.toLowerCase()}"
+       data-platform="${platform}" data-it="${s.it}">
+      <div class="card-top">
+        <div>
+          <div class="card-name">${s.name}</div>
+          <div class="card-handle">${s.handle}</div>
+        </div>
+        <svg class="card-arrow" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+      </div>
+      <div class="card-tags">
+        <span class="platform-badge ${badgeCls}">${icon} ${platform}</span>
+        <span class="tag">${s.cat}</span>
+        ${s.it ? '<span class="tag it">🇮🇹 IT</span>' : ''}
+        ${s.note ? `<span class="tag note">${s.note}</span>` : ''}
+      </div>
+    </a>`;
+}
+
+document.getElementById('grid-yt').innerHTML = sources.YouTube.map(s => makeCard(s,'YouTube')).join('');
+document.getElementById('grid-x').innerHTML  = sources.X.map(s => makeCard(s,'X')).join('');
+
+let activeFilter = 'all', searchVal = '';
+
+function applyFilters() {
+  const cards = document.querySelectorAll('.card');
+  let ytV = 0, xV = 0, delay = 0;
+
+  cards.forEach(c => {
+    const show =
+      (activeFilter === 'all' || activeFilter === c.dataset.platform || (activeFilter === 'it' && c.dataset.it === 'true')) &&
+      (!searchVal || c.dataset.name.includes(searchVal) || c.dataset.cat.includes(searchVal));
+
+    c.classList.toggle('hidden', !show);
+    if (show) {
+      c.style.animationDelay = `${delay * 0.04}s`;
+      delay++;
+      if (c.dataset.platform === 'YouTube') ytV++;
+      else xV++;
+    }
+  });
+
+  document.getElementById('count-yt').textContent = ytV;
+  document.getElementById('count-x').textContent  = xV;
+  document.getElementById('stat-total').textContent = ytV + xV;
+  document.getElementById('section-yt').style.display = ytV ? '' : 'none';
+  document.getElementById('section-x').style.display  = xV  ? '' : 'none';
+  document.getElementById('empty').classList.toggle('show', ytV + xV === 0);
+}
+
+document.querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    applyFilters();
+  });
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  searchVal = e.target.value.toLowerCase().trim();
+  applyFilters();
+});
+</script>
+</body>
+</html>
