@@ -17,7 +17,8 @@ import { SourceDialog } from "@/components/sources/source-dialog";
 import { DeleteDialog } from "@/components/sources/delete-dialog";
 import { SourcesTable } from "@/components/sources/sources-table";
 import { AISource, AISourceFormData, CATEGORIES } from "@/lib/types";
-import { Plus, Search, Star, Database } from "lucide-react";
+import Image from "next/image";
+import { Plus, Search, Star } from "lucide-react";
 
 export default function Home() {
   const [sources, setSources] = useState<AISource[]>([]);
@@ -136,11 +137,17 @@ export default function Home() {
       <header className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-primary rounded-lg p-2">
-              <Database className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <Image
+              src="/xsolve_logo_black.png"
+              alt="XSolve"
+              width={120}
+              height={40}
+              className="dark:invert"
+              priority
+            />
+            <div className="w-px h-8 bg-border" />
             <div>
-              <h1 className="text-xl font-bold">AI Sources Dashboard</h1>
+              <h1 className="text-sm font-semibold leading-tight">AI Sources Dashboard</h1>
               <p className="text-xs text-muted-foreground">
                 Gestisci le tue fonti e risorse AI
               </p>
